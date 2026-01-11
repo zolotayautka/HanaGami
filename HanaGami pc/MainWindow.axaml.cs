@@ -205,6 +205,11 @@ public partial class MainWindow : Window
         //
     }
 
+    private void OnAddNoteSaveClick(object? sender, RoutedEventArgs e)
+    {
+        //
+    }
+
     private void duumy(object? sender, RoutedEventArgs e)
     {
         // Dummy handler to prevent Avalonia warning about no handlers
