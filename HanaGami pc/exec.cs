@@ -263,6 +263,49 @@ static class Exec
 		command.ExecuteNonQuery();
 	}
 
+	public static void modify(Note modified_note)
+	{
+		// This method would contain logic to modify a note
+	}
+
+	private static List<Note> get_sync_list()
+	{
+		var notes = new List<Note>();
+		var sql = "SELECT local_id, global_id, name, naiyou, revision, is_shared, dirty, is_deleted, created_at, updated_at FROM notes WHERE dirty = 1;";
+		using var connection = new SqliteConnection($"Data Source={dbPath}");
+		connection.Open();
+		using var command = connection.CreateCommand();
+		command.CommandText = sql;
+		using var reader = command.ExecuteReader();
+		while (reader.Read())
+		{
+			var localId = reader.GetInt32(0);
+			var globalId = reader.GetInt32(1);
+			var name = reader.GetString(2);
+			var naiyou = reader.IsDBNull(3) ? null : reader.GetString(3);
+			var revision = reader.GetInt32(4);
+			var isShared = reader.GetInt32(5) != 0;
+			var dirty = reader.GetInt32(6) != 0;
+			var isDeleted = reader.GetInt32(7) != 0;
+			var createdAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(8)).DateTime;
+			var updatedAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(9)).DateTime;
+			var note = new Note(
+				localId: localId,
+				globalId: globalId,
+				name: name,
+				naiyou: naiyou,
+				revision: revision,
+				isShared: isShared,
+				dirty: dirty,
+				isDeleted: isDeleted,
+				createdAt: createdAt,
+				updatedAt: updatedAt
+			);
+			notes.Add(note);
+		}
+		return notes;
+	}
+
 	public static void sync()
 	{
 		// Synchronization logic would go here
