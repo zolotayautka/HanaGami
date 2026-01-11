@@ -101,10 +101,15 @@ public partial class MainWindow : Window
         EmptyStatePanel.IsVisible = false;
         AddPanel.IsVisible = false;
         DetailPanel.IsVisible = true;
-        
         NoteTitleText.Text = note.Name;
         SharedIcon.IsVisible = note.IsShared;
         var html = note.ReturnHtml();
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html,
+            @"<a\s+([^>]*?)href\s*=\s*[""'](?!https?://|mailto:|tel:)([^""']+)[""']([^>]*?)>(.*?)</a>",
+            @"<span class=""disabled-link"" style=""color: #0969da; cursor: default;"">$4</span>",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline
+        );
         htmlContent = $@"
             <!DOCTYPE html>
             <html>
@@ -164,19 +169,6 @@ public partial class MainWindow : Window
                     border: 1px solid #dfe2e5;
                 }}
             </style>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {{
-                    document.addEventListener('click', function(e) {{
-                        if (e.target.tagName === 'A') {{
-                            var href = e.target.getAttribute('href');
-                            if (href && !href.startsWith('http://') && !href.startsWith('https://')) {{
-                                e.preventDefault();
-                                return false;
-                            }}
-                        }}
-                    }}, true);
-                }});
-            </script>
         </head>
         <body>
             {html}
