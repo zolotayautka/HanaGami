@@ -18,7 +18,6 @@ public class Note
 	public bool Dirty { get; set; }
 	public bool IsDeleted { get; set; }
 
-	public DateTime CreatedAt { get; }
 	public DateTime UpdatedAt { get; set; }
 
 	public Note(int localId,
@@ -29,7 +28,6 @@ public class Note
 				bool isShared = false,
 				bool dirty = false,
 				bool isDeleted = false,
-				DateTime? createdAt = null,
 				DateTime? updatedAt = null)
 	{
 		LocalId = localId;
@@ -40,7 +38,6 @@ public class Note
 		IsShared = isShared;
 		Dirty = dirty;
 		IsDeleted = isDeleted;
-		CreatedAt = createdAt ?? DateTime.UtcNow;
 		UpdatedAt = updatedAt ?? DateTime.UtcNow;
 	}
 
@@ -81,7 +78,6 @@ static class Exec
 				is_shared INTEGER NOT NULL DEFAULT 0,
 				dirty INTEGER NOT NULL DEFAULT 0,
 				is_deleted INTEGER NOT NULL DEFAULT 0,
-				created_at REAL NOT NULL,
 				updated_at REAL NOT NULL
 			);";
 		
@@ -99,7 +95,7 @@ static class Exec
 	public static List<Note> load_local(string keyword = "")
 	{
 		var notes = new List<Note>();
-		var sql = "SELECT local_id, global_id, name, naiyou, revision, is_shared, dirty, is_deleted, created_at, updated_at FROM notes WHERE is_deleted = 0";
+		var sql = "SELECT local_id, global_id, name, naiyou, revision, is_shared, dirty, is_deleted, updated_at FROM notes WHERE is_deleted = 0";
 		if (!string.IsNullOrEmpty(keyword))
 		{
 			sql += " AND (name LIKE @keyword OR naiyou LIKE @keyword)";
@@ -124,8 +120,7 @@ static class Exec
 			var isShared = reader.GetInt32(5) != 0;
 			var dirty = reader.GetInt32(6) != 0;
 			var isDeleted = reader.GetInt32(7) != 0;
-			var createdAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(8)).DateTime;
-			var updatedAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(9)).DateTime;
+			var updatedAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(8)).DateTime;
 			var note = new Note(
 				localId: localId,
 				globalId: globalId,
@@ -135,7 +130,6 @@ static class Exec
 				isShared: isShared,
 				dirty: dirty,
 				isDeleted: isDeleted,
-				createdAt: createdAt,
 				updatedAt: updatedAt
 			);
 			notes.Add(note);
@@ -189,8 +183,8 @@ static class Exec
 		using var connection = new SqliteConnection($"Data Source={dbPath}");
 		connection.Open();
 		var insertSql = @"
-			INSERT INTO notes (local_id, global_id, name, naiyou, revision, is_shared, dirty, is_deleted, created_at, updated_at)
-			VALUES (@local_id, @global_id, @name, @naiyou, @revision, @is_shared, @dirty, @is_deleted, @created_at, @updated_at);";
+			INSERT INTO notes (local_id, global_id, name, naiyou, revision, is_shared, dirty, is_deleted, updated_at)
+			VALUES (@local_id, @global_id, @name, @naiyou, @revision, @is_shared, @dirty, @is_deleted, @updated_at);";
 		using var command = connection.CreateCommand();
 		command.CommandText = insertSql;
 		command.Parameters.AddWithValue("@local_id", new_note.LocalId);
@@ -201,7 +195,6 @@ static class Exec
 		command.Parameters.AddWithValue("@is_shared", new_note.IsShared ? 1 : 0);
 		command.Parameters.AddWithValue("@dirty", new_note.Dirty ? 1 : 0);
 		command.Parameters.AddWithValue("@is_deleted", new_note.IsDeleted ? 1 : 0);
-		command.Parameters.AddWithValue("@created_at", DateTime.UtcNow);
 		command.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
 		command.ExecuteNonQuery();
 	}
@@ -271,7 +264,7 @@ static class Exec
 	private static List<Note> get_sync_list()
 	{
 		var notes = new List<Note>();
-		var sql = "SELECT local_id, global_id, name, naiyou, revision, is_shared, dirty, is_deleted, created_at, updated_at FROM notes WHERE dirty = 1;";
+		var sql = "SELECT local_id, global_id, name, naiyou, revision, is_shared, dirty, is_deleted, updated_at FROM notes WHERE dirty = 1;";
 		using var connection = new SqliteConnection($"Data Source={dbPath}");
 		connection.Open();
 		using var command = connection.CreateCommand();
@@ -287,8 +280,7 @@ static class Exec
 			var isShared = reader.GetInt32(5) != 0;
 			var dirty = reader.GetInt32(6) != 0;
 			var isDeleted = reader.GetInt32(7) != 0;
-			var createdAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(8)).DateTime;
-			var updatedAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(9)).DateTime;
+			var updatedAt = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetDouble(8)).DateTime;
 			var note = new Note(
 				localId: localId,
 				globalId: globalId,
@@ -298,7 +290,6 @@ static class Exec
 				isShared: isShared,
 				dirty: dirty,
 				isDeleted: isDeleted,
-				createdAt: createdAt,
 				updatedAt: updatedAt
 			);
 			notes.Add(note);
