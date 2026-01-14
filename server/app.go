@@ -19,7 +19,6 @@ type Note struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 	UserID    int       `gorm:"not null;index" json:"user_id"`
 	User      User      `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"user"`
-	HTML      string    `gorm:"-" json:"html"`
 }
 
 type User struct {
@@ -47,12 +46,15 @@ func (n *Note) update_time() {
 
 func load_note(user User, keyword string) string {
 	var notes []Note
-	db.Where("user_id = ? AND name LIKE ?", user.ID, "%"+keyword+"%").Find(&notes)
-	for i := range notes {
-		notes[i].HTML = notes[i].ReturnHTML()
-	}
+	db.Omit("Naiyou").Where("user_id = ? AND name LIKE ?", user.ID, "%"+keyword+"%").Find(&notes)
 	notes_json, _ := json.Marshal(notes)
 	return string(notes_json)
+}
+
+func get_Note(global_id int) string {
+	var note Note
+	db.Preload("User").First(&note, global_id)
+	return note.ReturnHTML()
 }
 
 func add_note(new_note Note) bool {
